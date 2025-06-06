@@ -35,6 +35,12 @@
       max-height: 300px;
       overflow-y: auto;
     }
+    .gallery img {
+      max-width: 100px;
+      margin: 0.5rem;
+      border: 2px solid #00f7ff;
+      border-radius: 10px;
+    }
     audio {
       display: none;
     }
@@ -80,6 +86,11 @@
     <div class="log mt-4 text-left text-sm" id="logOutput"></div>
   </div>
 
+  <div id="galleryArea" class="text-center mt-12">
+    <h2 class="text-xl text-blue-300 mb-2">📸 登録選手ギャラリー</h2>
+    <div id="gallery" class="gallery flex flex-wrap justify-center"></div>
+  </div>
+
   <script>
     const startBtn = document.getElementById('startCamera');
     const video = document.getElementById('video');
@@ -91,15 +102,22 @@
     const previewArea = document.getElementById('previewArea');
     const battleArea = document.getElementById('battleArea');
     const logOutput = document.getElementById('logOutput');
+    const gallery = document.getElementById('gallery');
     const bgm = document.getElementById('bgm');
     const clickSound = document.getElementById('clickSound');
 
-    document.getElementById('startBGM').onclick = () => { bgm.play(); };
+    document.getElementById('startBGM').onclick = () => {
+      bgm.currentTime = 0;
+      bgm.play().catch(e => console.log("BGM error:", e));
+    };
     document.getElementById('stopBGM').onclick = () => { bgm.pause(); };
 
     let stream;
 
-    function playClick() { clickSound.currentTime = 0; clickSound.play(); }
+    function playClick() {
+      clickSound.currentTime = 0;
+      clickSound.play();
+    }
 
     startBtn.onclick = async () => {
       playClick();
@@ -128,9 +146,14 @@
 
     submitBtn.onclick = () => {
       playClick();
-      stream.getTracks().forEach(track => track.stop());
+      if (stream) stream.getTracks().forEach(track => track.stop());
       previewArea.classList.add('hidden');
       battleArea.classList.remove('hidden');
+
+      const img = new Image();
+      img.src = canvas.toDataURL('image/png');
+      img.alt = "登録選手";
+      gallery.appendChild(img);
     };
 
     document.getElementById('startBattle').onclick = () => {
