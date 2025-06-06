@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>最強バトルトーナメント2025 - ver 1.6</title>
+  <title>最強バトルトーナメント2025 - ver 1.7</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <style>
     body {
@@ -30,6 +30,7 @@
       margin: 1rem auto;
       text-align: left;
       border-radius: 10px;
+      white-space: pre-wrap;
     }
     .gallery img {
       max-width: 120px;
@@ -42,7 +43,7 @@
 </head>
 <body>
   <h1 class="text-2xl font-bold text-yellow-400">🎮 最強バトルトーナメント2025</h1>
-  <p class="text-gray-400 mb-4">ver 1.6</p>
+  <p class="text-gray-400 mb-4">ver 1.7</p>
 
   <button class="btn" onclick="startBGM()">🎵 BGM再生</button>
   <button class="btn" onclick="stopBGM()">🔇 BGM停止</button>
@@ -130,10 +131,16 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ charA: a.name, charB: b.name })
         });
+
         const data = await res.json();
-        log.innerHTML += `<br><br><strong>🧠 実況結果:</strong><br>${data.result}`;
+
+        if (data.result && typeof data.result === "string") {
+          log.innerHTML += `\n\n<strong>🧠 実況結果:</strong><br>${data.result}`;
+        } else {
+          log.innerHTML += `\n⚠️ 返ってきたレスポンスに実況が含まれていません<br><code>${JSON.stringify(data)}</code>`;
+        }
       } catch (err) {
-        log.innerHTML += `<br>❌ 実況取得に失敗しました：${err.message}`;
+        log.innerHTML += `\n❌ fetch自体に失敗しました：${err.message}<br><code>${JSON.stringify(err)}</code>`;
       }
     }
   </script>
