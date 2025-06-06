@@ -1,195 +1,139 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>最強バトルトーナメント2025</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>最強バトルトーナメント2025 - ver 1.5</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <style>
     body {
-      background: linear-gradient(to bottom, #1a1a2e, #000);
-      font-family: 'Press Start 2P', sans-serif;
+      background-color: #111;
       color: #f8f8f8;
-      padding-bottom: 5rem;
+      font-family: 'Arial', sans-serif;
+      text-align: center;
+      padding: 2rem;
     }
     .btn {
-      padding: 0.75rem 1.5rem;
-      background-color: #facc15;
+      background: #facc15;
       color: #000;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
       font-weight: bold;
-      border-radius: 0.5rem;
-      box-shadow: 0 0 10px #facc15;
-      transition: all 0.2s;
       margin: 0.5rem;
-    }
-    .btn:hover {
-      background-color: #fde047;
+      cursor: pointer;
     }
     .log {
-      background: #111;
-      padding: 1em;
+      background: #222;
       border: 2px solid #333;
+      padding: 1rem;
+      max-width: 700px;
+      margin: 1rem auto;
+      text-align: left;
       border-radius: 10px;
-      font-family: monospace;
-      max-height: 300px;
-      overflow-y: auto;
-    }
-    .gallery-item {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      margin: 1rem;
     }
     .gallery img {
-      max-width: 100px;
-      border: 3px solid #ff6b6b;
+      max-width: 120px;
+      margin: 0.5rem;
+      border: 3px solid #f87171;
       border-radius: 10px;
-      box-shadow: 0 0 12px rgba(255, 0, 0, 0.5);
-    }
-    .gallery label {
-      margin-top: 0.25rem;
-      font-size: 0.75rem;
-      color: #ff6b6b;
-    }
-    audio {
-      display: none;
+      box-shadow: 0 0 10px #f87171;
     }
   </style>
 </head>
-<body class="p-4">
-  <h1 class="text-center text-2xl md:text-3xl font-bold text-yellow-400 mb-2">🎮 最強バトルトーナメント2025 🎮</h1>
-  <p class="text-center text-sm text-gray-400 mb-4">ver 1.3</p>
+<body>
+  <h1 class="text-2xl font-bold text-yellow-400">🎮 最強バトルトーナメント2025</h1>
+  <p class="text-gray-400 mb-4">ver 1.5</p>
 
-  <div class="text-center mb-6">
-    <button id="startBGM" class="btn">🎵 BGMを再生</button>
-    <button id="stopBGM" class="btn">🔇 BGM停止</button>
-  </div>
+  <button class="btn" onclick="startBGM()">🎵 BGM再生</button>
+  <button class="btn" onclick="stopBGM()">🔇 BGM停止</button>
   <audio id="bgm" loop>
     <source src="./Peritune_Swift_Strike_loop.mp3" type="audio/mpeg">
   </audio>
-  <audio id="clickSound">
-    <source src="https://files.catbox.moe/5lg2ox.mp3" type="audio/mpeg">
-  </audio>
 
-  <div id="cameraArea" class="text-center mt-8">
-    <button id="startCamera" class="btn">📸 カメラを起動</button><br/>
-    <video id="video" autoplay playsinline class="mx-auto mt-4 hidden border-4 border-yellow-400"></video><br/>
-    <button id="takePhoto" class="btn hidden mt-2">🖼️ 写真を撮る</button>
+  <div class="my-4">
+    <button class="btn" onclick="startCamera()">📸 カメラを起動</button>
+    <video id="video" autoplay playsinline class="hidden border-4 border-yellow-500 mt-4"></video>
+    <button id="takePhoto" class="btn hidden mt-2" onclick="takePhoto()">🖼️ 写真を撮る</button>
   </div>
 
-  <div id="previewArea" class="hidden text-center mt-8">
-    <h2 class="text-xl text-green-400">この画像でOK？</h2>
-    <canvas id="canvas" class="border-4 border-green-400 rounded-lg mx-auto my-2"></canvas><br/>
-    <button id="retake" class="btn">🔄 撮り直す</button>
-    <button id="submitPhoto" class="btn">✅ この画像を使う</button>
-  </div>
+  <canvas id="canvas" class="hidden"></canvas>
+  <button id="confirmBtn" class="btn hidden" onclick="confirmPhoto()">✅ この画像を使う</button>
 
-  <div id="battleArea" class="hidden text-center mt-8">
-    <h2 class="text-xl text-pink-400">実況モードを選んでください</h2>
-    <select id="modeSelect" class="mt-2 p-2 rounded text-black">
-      <option value="random">🎲 ランダム（デフォルト）</option>
-      <option value="chuunibyou">🧙 中二病実況</option>
-      <option value="gag">🎉 ギャグ実況</option>
-      <option value="robot">🤖 ロボ実況</option>
-      <option value="plain">🧑‍🏫 淡々実況</option>
-    </select><br/>
-    <button id="startBattle" class="btn mt-4">🔥 トーナメント開始</button>
-    <div class="log mt-4 text-left text-sm" id="logOutput"></div>
-  </div>
+  <h2 class="text-xl mt-8 text-blue-300">登録選手ギャラリー</h2>
+  <div id="gallery" class="gallery flex flex-wrap justify-center"></div>
 
-  <div id="galleryArea" class="text-center mt-12">
-    <h2 class="text-xl text-blue-300 mb-2">📸 登録選手ギャラリー</h2>
-    <div id="gallery" class="gallery flex flex-wrap justify-center"></div>
+  <div class="mt-10">
+    <button class="btn" onclick="startBattle()">🥊 トーナメント開始</button>
   </div>
+  <div id="log" class="log"></div>
 
   <script>
-    const startBtn = document.getElementById('startCamera');
-    const video = document.getElementById('video');
-    const takeBtn = document.getElementById('takePhoto');
-    const canvas = document.getElementById('canvas');
-    const ctx = canvas.getContext('2d');
-    const retakeBtn = document.getElementById('retake');
-    const submitBtn = document.getElementById('submitPhoto');
-    const previewArea = document.getElementById('previewArea');
-    const battleArea = document.getElementById('battleArea');
-    const logOutput = document.getElementById('logOutput');
-    const gallery = document.getElementById('gallery');
     const bgm = document.getElementById('bgm');
-    const clickSound = document.getElementById('clickSound');
-
-    let playerCount = 0;
-    let stream;
-
-    document.getElementById('startBGM').onclick = () => {
+    function startBGM() {
       bgm.currentTime = 0;
-      bgm.play().catch(e => console.log("BGM error:", e));
-    };
-    document.getElementById('stopBGM').onclick = () => { bgm.pause(); };
-
-    function playClick() {
-      clickSound.currentTime = 0;
-      clickSound.play();
+      bgm.play().catch(e => console.log('BGM error:', e));
+    }
+    function stopBGM() {
+      bgm.pause();
     }
 
-    startBtn.onclick = async () => {
-      playClick();
-      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { exact: "environment" } } });
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const takeBtn = document.getElementById('takePhoto');
+    const confirmBtn = document.getElementById('confirmBtn');
+    const ctx = canvas.getContext('2d');
+    const gallery = document.getElementById('gallery');
+    const log = document.getElementById('log');
+
+    let players = [];
+    let playerCount = 0;
+
+    async function startCamera() {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { exact: 'environment' } } });
       video.srcObject = stream;
       video.classList.remove('hidden');
       takeBtn.classList.remove('hidden');
-    };
+    }
 
-    takeBtn.onclick = () => {
-      playClick();
+    function takePhoto() {
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       ctx.drawImage(video, 0, 0);
-      video.classList.add('hidden');
-      takeBtn.classList.add('hidden');
-      previewArea.classList.remove('hidden');
-    };
+      canvas.classList.remove('hidden');
+      confirmBtn.classList.remove('hidden');
+    }
 
-    retakeBtn.onclick = () => {
-      playClick();
-      previewArea.classList.add('hidden');
-      video.classList.remove('hidden');
-      takeBtn.classList.remove('hidden');
-    };
-
-    submitBtn.onclick = () => {
-      playClick();
-      if (stream) stream.getTracks().forEach(track => track.stop());
-      previewArea.classList.add('hidden');
-      battleArea.classList.remove('hidden');
-
-      const item = document.createElement('div');
-      item.classList.add('gallery-item');
-      const img = new Image();
-      img.src = canvas.toDataURL('image/png');
-      img.alt = "登録選手";
-      const label = document.createElement('label');
+    function confirmPhoto() {
       playerCount++;
-      label.innerText = `No.${playerCount}`;
-      item.appendChild(img);
-      item.appendChild(label);
-      gallery.appendChild(item);
-    };
+      const dataUrl = canvas.toDataURL('image/png');
+      const img = document.createElement('img');
+      img.src = dataUrl;
+      img.alt = `選手 No.${playerCount}`;
+      gallery.appendChild(img);
+      players.push({ no: playerCount, img: dataUrl, name: `選手 No.${playerCount}` });
+      canvas.classList.add('hidden');
+      confirmBtn.classList.add('hidden');
+    }
 
-    document.getElementById('startBattle').onclick = () => {
-      playClick();
-      const mode = document.getElementById('modeSelect').value;
-      const stage = '🌋 溶岩の闘技場';
-      const sampleLog = `🎤 実況モード: ${mode}<br>
-        🌋 戦闘ステージ：${stage}<br>
-        🦁 狂乱のライオンキング vs 🐊 ワニキャプテン 開始！<br>
-        ライオンキングの必殺技『ローリング噛みつき』が炸裂！<br>
-        ワニキャプテンに100ダメージ！さらにワニキャプテンは出血してしまったー！<br><br>
-        🌀 異常気象発生！ 突如、酸性の雨が降り注ぐ！<br>
-        両者ともに視界不良！スリップダメージを受けた！<br><br>
-        （※ここで戦闘画像が後ほど生成されます）<br>`;
-      logOutput.innerHTML = sampleLog;
-    };
+    function getRandomPair() {
+      const shuffled = [...players].sort(() => 0.5 - Math.random());
+      return [shuffled[0], shuffled[1]];
+    }
+
+    function startBattle() {
+      if (players.length < 2) {
+        log.innerHTML = "登録された選手が2人以上必要です。";
+        return;
+      }
+      const [a, b] = getRandomPair();
+      const prompt = `【実況生成リクエスト】\n` +
+        `以下の2体がトーナメントで戦います。\n` +
+        `キャラA: ${a.name}（No.${a.no}）\n` +
+        `キャラB: ${b.name}（No.${b.no}）\n` +
+        `実況テキストを作成してください。開始・技・効果・勝者まで含めて200文字以内で。`;
+      log.innerHTML = `<strong>対戦カード:</strong> ${a.name} vs ${b.name}<br><br>` +
+        `<strong>📡 Mondayへの実況依頼:</strong><br><pre>${prompt}</pre>`;
+    }
   </script>
 </body>
 </html>
