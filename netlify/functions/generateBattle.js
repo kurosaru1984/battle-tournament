@@ -1,6 +1,4 @@
-const fetch = require("node-fetch");
-
-exports.handler = async (event) => {
+export default async function handler(event) {
   const { charA, charB } = JSON.parse(event.body);
 
   const prompt = `キャラA: ${charA} と キャラB: ${charB} のトーナメントバトル実況を200文字以内で生成してください。`;
@@ -24,4 +22,4 @@ exports.handler = async (event) => {
     statusCode: 200,
     body: JSON.stringify({ result: data.choices[0].message.content }),
   };
-};
+}
