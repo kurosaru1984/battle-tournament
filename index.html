@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>最強バトルトーナメント2025</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background: linear-gradient(to bottom, #1a1a2e, #000);
+      font-family: 'Press Start 2P', sans-serif;
+      color: #f8f8f8;
+      padding-bottom: 5rem;
+    }
+    .btn {
+      padding: 0.75rem 1.5rem;
+      background-color: #facc15;
+      color: #000;
+      font-weight: bold;
+      border-radius: 0.5rem;
+      box-shadow: 0 0 10px #facc15;
+      transition: all 0.2s;
+      margin: 0.5rem;
+    }
+    .btn:hover {
+      background-color: #fde047;
+    }
+    .log {
+      background: #111;
+      padding: 1em;
+      border: 2px solid #333;
+      border-radius: 10px;
+      font-family: monospace;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    audio {
+      display: none;
+    }
+  </style>
+</head>
+<body class="p-4">
+  <h1 class="text-center text-2xl md:text-3xl font-bold text-yellow-400 mb-4">🎮 最強バトルトーナメント2025 🎮</h1>
+
+  <div class="text-center mb-6">
+    <button id="startBGM" class="btn">🎵 BGMを再生</button>
+    <button id="stopBGM" class="btn">🔇 BGM停止</button>
+  </div>
+  <audio id="bgm" loop>
+    <source src="https://files.catbox.moe/4zxrrc.mp3" type="audio/mpeg">
+  </audio>
+  <audio id="clickSound">
+    <source src="https://files.catbox.moe/5lg2ox.mp3" type="audio/mpeg">
+  </audio>
+
+  <div id="cameraArea" class="text-center mt-8">
+    <button id="startCamera" class="btn">📸 カメラを起動</button><br/>
+    <video id="video" autoplay playsinline class="mx-auto mt-4 hidden border-4 border-yellow-400"></video><br/>
+    <button id="takePhoto" class="btn hidden mt-2">🖼️ 写真を撮る</button>
+  </div>
+
+  <div id="previewArea" class="hidden text-center mt-8">
+    <h2 class="text-xl text-green-400">この画像でOK？</h2>
+    <canvas id="canvas" class="border-4 border-green-400 rounded-lg mx-auto my-2"></canvas><br/>
+    <button id="retake" class="btn">🔄 撮り直す</button>
+    <button id="submitPhoto" class="btn">✅ この画像を使う</button>
+  </div>
+
+  <div id="battleArea" class="hidden text-center mt-8">
+    <h2 class="text-xl text-pink-400">実況モードを選んでください</h2>
+    <select id="modeSelect" class="mt-2 p-2 rounded text-black">
+      <option value="random">🎲 ランダム（デフォルト）</option>
+      <option value="chuunibyou">🧙 中二病実況</option>
+      <option value="gag">🎉 ギャグ実況</option>
+      <option value="robot">🤖 ロボ実況</option>
+      <option value="plain">🧑‍🏫 淡々実況</option>
+    </select><br/>
+    <button id="startBattle" class="btn mt-4">🔥 トーナメント開始</button>
+    <div class="log mt-4 text-left text-sm" id="logOutput"></div>
+  </div>
+
+  <script>
+    const startBtn = document.getElementById('startCamera');
+    const video = document.getElementById('video');
+    const takeBtn = document.getElementById('takePhoto');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const retakeBtn = document.getElementById('retake');
+    const submitBtn = document.getElementById('submitPhoto');
+    const previewArea = document.getElementById('previewArea');
+    const battleArea = document.getElementById('battleArea');
+    const logOutput = document.getElementById('logOutput');
+    const bgm = document.getElementById('bgm');
+    const clickSound = document.getElementById('clickSound');
+
+    document.getElementById('startBGM').onclick = () => { bgm.play(); };
+    document.getElementById('stopBGM').onclick = () => { bgm.pause(); };
+
+    let stream;
+
+    function playClick() { clickSound.currentTime = 0; clickSound.play(); }
+
+    startBtn.onclick = async () => {
+      playClick();
+      stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      video.srcObject = stream;
+      video.classList.remove('hidden');
+      takeBtn.classList.remove('hidden');
+    };
+
+    takeBtn.onclick = () => {
+      playClick();
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      ctx.drawImage(video, 0, 0);
+      video.classList.add('hidden');
+      takeBtn.classList.add('hidden');
+      previewArea.classList.remove('hidden');
+    };
+
+    retakeBtn.onclick = () => {
+      playClick();
+      previewArea.classList.add('hidden');
+      video.classList.remove('hidden');
+      takeBtn.classList.remove('hidden');
+    };
+
+    submitBtn.onclick = () => {
+      playClick();
+      stream.getTracks().forEach(track => track.stop());
+      previewArea.classList.add('hidden');
+      battleArea.classList.remove('hidden');
+    };
+
+    document.getElementById('startBattle').onclick = () => {
+      playClick();
+      const mode = document.getElementById('modeSelect').value;
+      const stage = '🌋 溶岩の闘技場';
+      const sampleLog = `🎤 実況モード: ${mode}<br>
+        🌋 戦闘ステージ：${stage}<br>
+        🦁 狂乱のライオンキング vs 🐊 ワニキャプテン 開始！<br>
+        ライオンキングの必殺技『ローリング噛みつき』が炸裂！<br>
+        ワニキャプテンに100ダメージ！さらにワニキャプテンは出血してしまったー！<br><br>
+        🌀 異常気象発生！ 突如、酸性の雨が降り注ぐ！<br>
+        両者ともに視界不良！スリップダメージを受けた！<br><br>
+        （※ここで戦闘画像が後ほど生成されます）<br>`;
+      logOutput.innerHTML = sampleLog;
+    };
+  </script>
+</body>
+</html>
