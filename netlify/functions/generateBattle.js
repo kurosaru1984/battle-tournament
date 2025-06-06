@@ -1,4 +1,4 @@
-export default async function handler(event) {
+exports.handler = async function(event) {
   const { charA, charB } = JSON.parse(event.body);
 
   const prompt = `キャラA: ${charA} と キャラB: ${charB} のトーナメントバトル実況を200文字以内で生成してください。`;
@@ -20,6 +20,6 @@ export default async function handler(event) {
 
   return {
     statusCode: 200,
-    body: JSON.stringify({ result: data.choices[0].message.content }),
+    body: JSON.stringify({ result: data.choices?.[0]?.message?.content || \"[No response received]\" })
   };
-}
+};
