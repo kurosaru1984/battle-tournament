@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>最強バトルトーナメント2025 - ver 1.5</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>最強バトルトーナメント2025 - ver 1.6</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <style>
     body {
@@ -42,7 +42,7 @@
 </head>
 <body>
   <h1 class="text-2xl font-bold text-yellow-400">🎮 最強バトルトーナメント2025</h1>
-  <p class="text-gray-400 mb-4">ver 1.5</p>
+  <p class="text-gray-400 mb-4">ver 1.6</p>
 
   <button class="btn" onclick="startBGM()">🎵 BGM再生</button>
   <button class="btn" onclick="stopBGM()">🔇 BGM停止</button>
@@ -69,13 +69,8 @@
 
   <script>
     const bgm = document.getElementById('bgm');
-    function startBGM() {
-      bgm.currentTime = 0;
-      bgm.play().catch(e => console.log('BGM error:', e));
-    }
-    function stopBGM() {
-      bgm.pause();
-    }
+    function startBGM() { bgm.currentTime = 0; bgm.play().catch(e => console.log(e)); }
+    function stopBGM() { bgm.pause(); }
 
     const video = document.getElementById('video');
     const canvas = document.getElementById('canvas');
@@ -120,19 +115,26 @@
       return [shuffled[0], shuffled[1]];
     }
 
-    function startBattle() {
+    async function startBattle() {
       if (players.length < 2) {
-        log.innerHTML = "登録された選手が2人以上必要です。";
+        log.innerHTML = "⚠️ 選手は最低2人登録してください！";
         return;
       }
+
       const [a, b] = getRandomPair();
-      const prompt = `【実況生成リクエスト】\n` +
-        `以下の2体がトーナメントで戦います。\n` +
-        `キャラA: ${a.name}（No.${a.no}）\n` +
-        `キャラB: ${b.name}（No.${b.no}）\n` +
-        `実況テキストを作成してください。開始・技・効果・勝者まで含めて200文字以内で。`;
-      log.innerHTML = `<strong>対戦カード:</strong> ${a.name} vs ${b.name}<br><br>` +
-        `<strong>📡 Mondayへの実況依頼:</strong><br><pre>${prompt}</pre>`;
+      log.innerHTML = `<strong>対戦カード:</strong> ${a.name} vs ${b.name}<br>📡 実況生成中...`;
+
+      try {
+        const res = await fetch("/.netlify/functions/generateBattle", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ charA: a.name, charB: b.name })
+        });
+        const data = await res.json();
+        log.innerHTML += `<br><br><strong>🧠 実況結果:</strong><br>${data.result}`;
+      } catch (err) {
+        log.innerHTML += `<br>❌ 実況取得に失敗しました：${err.message}`;
+      }
     }
   </script>
 </body>
