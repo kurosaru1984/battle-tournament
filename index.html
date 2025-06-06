@@ -133,7 +133,7 @@
         const data = await res.json();
         log.innerHTML += `<br><br><strong>🧠 実況結果:</strong><br>${data.result}`;
       } catch (err) {
-        log.innerHTML += `<br>❌ 実況取得に失敗しました：${err.message}`;
+        log.innerHTML += `<br>❌ 実況取得に失敗しました：${err.message}<br><code>${JSON.stringify(err)}</code>`;
       }
     }
   </script>
