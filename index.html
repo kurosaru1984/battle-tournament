@@ -56,6 +56,14 @@
     <video id="video" autoplay playsinline class="hidden border-4 border-yellow-500 mt-4"></video>
     <button id="takePhoto" class="btn hidden mt-2" onclick="takePhoto()">🖼️ 写真を撮る</button>
   </div>
+  <div class="my-2">
+    <label for="nameCategory" class="mr-2">名前カテゴリ</label>
+    <select id="nameCategory" class="text-black p-1">
+      <option value="A">A</option>
+      <option value="B">B</option>
+      <option value="D">D</option>
+    </select>
+  </div>
 
   <canvas id="canvas" class="hidden"></canvas>
   <button id="confirmBtn" class="btn hidden" onclick="confirmPhoto()">✅ この画像を使う</button>
@@ -99,14 +107,37 @@
       confirmBtn.classList.remove('hidden');
     }
 
+    function getRandom(arr) {
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    function generateName() {
+      const category = document.getElementById('nameCategory').value;
+      let data;
+      if (category === 'A') data = window.nameDataA;
+      else if (category === 'B') data = window.nameDataB;
+      else if (category === 'D') data = window.nameDataD;
+
+      if (!data) {
+        console.error('No name data for category:', category);
+        return '名無しの戦士';
+      }
+
+      const adjective = getRandom(data.adjectives);
+      const noun = getRandom(data.nouns);
+      const title = getRandom(data.titles);
+      return adjective + noun + title;
+    }
+
     function confirmPhoto() {
       playerCount++;
       const dataUrl = canvas.toDataURL('image/png');
       const img = document.createElement('img');
       img.src = dataUrl;
-      img.alt = `選手 No.${playerCount}`;
+      const name = generateName();
+      img.alt = name;
       gallery.appendChild(img);
-      players.push({ no: playerCount, img: dataUrl, name: `選手 No.${playerCount}` });
+      players.push({ no: playerCount, img: dataUrl, name });
       canvas.classList.add('hidden');
       confirmBtn.classList.add('hidden');
     }
@@ -144,5 +175,8 @@
       }
     }
   </script>
+  <script src="./name-data/setA.js"></script>
+  <script src="./name-data/setB.js"></script>
+  <script src="./name-data/setD.js"></script>
 </body>
 </html>
