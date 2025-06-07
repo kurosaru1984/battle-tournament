@@ -56,33 +56,27 @@
     <source src="./Peritune_Swift_Strike_loop.mp3" type="audio/mpeg">
   </audio>
 
-  <div class="my-4">
-    <select id="nameCategory" class="text-black">
-      <option value="A">爆走系</option>
-      <option value="B">闇系</option>
-      <option value="D">ランダム混合</option>
-    </select>
-    <button class="btn" onclick="generateName()">🎲 名前生成</button>
-    <input id="playerName" class="text-black p-2" placeholder="生成された名前" />
-    <button class="btn" onclick="confirmName()">✅ 名前登録</button>
-  </div>
 
   <div class="my-4">
     <button class="btn" onclick="startCamera()">📸 カメラを起動</button>
     <video id="video" autoplay playsinline class="hidden border-4 border-yellow-500 mt-4"></video>
     <button id="takePhoto" class="btn hidden mt-2" onclick="takePhoto()">🖼️ 写真を撮る</button>
   </div>
-  <div class="my-2">
-    <label for="nameCategory" class="mr-2">名前カテゴリ</label>
-    <select id="nameCategory" class="text-black p-1">
-      <option value="A">A</option>
-      <option value="B">B</option>
-      <option value="D">D</option>
-    </select>
-  </div>
 
   <canvas id="canvas" class="hidden"></canvas>
   <button id="confirmBtn" class="btn hidden" onclick="confirmPhoto()">✅ この画像を使う</button>
+
+  <div id="nameSection" class="my-4 hidden">
+    <label for="nameCategory" class="mr-2">名前カテゴリ</label>
+    <select id="nameCategory" class="text-black">
+      <option value="A">A = High-Speed Style（爆走系）</option>
+      <option value="B">B = Dark Style（闇系）</option>
+      <option value="D">D = Random Mixed（ランダム混合）</option>
+    </select>
+    <button class="btn" onclick="handleGenerateName()">🎲 名前生成</button>
+    <input id="playerName" class="text-black p-2" placeholder="生成された名前" />
+    <button class="btn" onclick="registerPlayer()">✅ 確定して登録</button>
+  </div>
 
   <h2 class="text-xl mt-8 text-blue-300">登録選手ギャラリー</h2>
   <div id="gallery" class="gallery flex flex-wrap justify-center"></div>
@@ -106,50 +100,15 @@
     const canvas = document.getElementById('canvas');
     const takeBtn = document.getElementById('takePhoto');
     const confirmBtn = document.getElementById('confirmBtn');
+    const nameSection = document.getElementById('nameSection');
+    const playerNameInput = document.getElementById('playerName');
     const ctx = canvas.getContext('2d');
     const gallery = document.getElementById('gallery');
     const log = document.getElementById('log');
 
     let players = [];
     let playerCount = 0;
-    let selectedIndex = null;
-    function selectCandidate(index) {
-      selectedIndex = Number(index);
-      const imgs = gallery.querySelectorAll('img');
-      imgs.forEach((el, i) => {
-        if (i === selectedIndex) el.classList.add('selected');
-        else el.classList.remove('selected');
-      });
-      document.getElementById('playerName').value = players[selectedIndex].name || '';
-    }
-
-    function generateName() {
-      if (selectedIndex === null) return;
-      var category = document.getElementById('nameCategory').value;
-      var data;
-      if (category === 'A') data = window.nameDataA;
-      else if (category === 'B') data = window.nameDataB;
-      else if (category === 'D') data = window.nameDataD;
-      if (!data || !data.adjectives || !data.nouns || !data.titles) {
-        console.warn('名前データが見つかりません', category);
-        document.getElementById('playerName').value = '';
-        return '';
-      }
-      function rand(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
-      var name = rand(data.adjectives) + rand(data.nouns) + rand(data.titles);
-      document.getElementById('playerName').value = name;
-      return name;
-    }
-
-    function confirmName() {
-      if (selectedIndex === null) return;
-      const nameInput = document.getElementById('playerName');
-      const name = nameInput.value || generateName();
-      players[selectedIndex].name = name;
-      const imgEl = gallery.querySelectorAll('img')[selectedIndex];
-      imgEl.alt = name;
-      nameInput.value = '';
-    }
+    let currentImage = null;
 
     async function startCamera() {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { exact: 'environment' } } });
@@ -171,7 +130,7 @@
       return arr[Math.floor(Math.random() * arr.length)];
     }
 
-    function generateName() {
+    function handleGenerateName() {
       const category = document.getElementById('nameCategory').value;
       let data;
       if (category === 'A') data = window.nameDataA;
@@ -180,27 +139,42 @@
 
       if (!data) {
         console.error('No name data for category:', category);
-        return '名無しの戦士';
+        return '';
       }
 
       const adjective = getRandom(data.adjectives);
       const noun = getRandom(data.nouns);
       const title = getRandom(data.titles);
-      return adjective + noun + title;
+      const name = adjective + noun + title;
+      playerNameInput.value = name;
+      return name;
     }
 
     function confirmPhoto() {
+      currentImage = canvas.toDataURL('image/png');
+      confirmBtn.classList.add('hidden');
+      takeBtn.classList.add('hidden');
+      if (video.srcObject) {
+        video.srcObject.getTracks().forEach(t => t.stop());
+      }
+      video.classList.add('hidden');
+      nameSection.classList.remove('hidden');
+    }
+
+    function registerPlayer() {
+      const name = playerNameInput.value || handleGenerateName();
+      if (!currentImage) return;
       playerCount++;
-      const dataUrl = canvas.toDataURL('image/png');
+      players.push({ no: playerCount, name, img: currentImage });
       const img = document.createElement('img');
-      img.src = dataUrl;
-      const name = generateName();
+      img.src = currentImage;
       img.alt = name;
       gallery.appendChild(img);
-      players.push({ no: playerCount, img: dataUrl, name });
+      playerNameInput.value = '';
+      nameSection.classList.add('hidden');
       canvas.classList.add('hidden');
-      confirmBtn.classList.add('hidden');
-
+      log.innerHTML = `✅ ${name} を登録しました！`;
+      currentImage = null;
     }
 
     function getRandomPair(list) {
@@ -237,8 +211,5 @@
       }
     }
   </script>
-  <script src="./name-data/setA.js"></script>
-  <script src="./name-data/setB.js"></script>
-  <script src="./name-data/setD.js"></script>
 </body>
 </html>
