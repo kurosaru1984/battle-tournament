@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>最強バトルトーナメント2025 - ver 1.7</title>
+  <title>最強バトルトーナメント2025 - ver 2.0</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <style>
     body {
@@ -45,6 +45,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
+      position: relative;
     }
     .gallery .player-container input {
       margin-top: 0.25rem;
@@ -54,11 +55,21 @@
       border-color: #34d399;
       box-shadow: 0 0 10px #34d399;
     }
+    .badge {
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      background: #34d399;
+      color: #000;
+      font-size: 0.75rem;
+      padding: 0 4px;
+      border-radius: 4px;
+    }
   </style>
 </head>
 <body>
   <h1 class="text-2xl font-bold text-yellow-400">🎮 最強バトルトーナメント2025</h1>
-  <p class="text-gray-400 mb-4">ver 1.7</p>
+  <p class="text-gray-400 mb-4">ver 2.0</p>
 
   <button class="btn" onclick="startBGM()">🎵 BGM再生</button>
   <button class="btn" onclick="stopBGM()">🔇 BGM停止</button>
@@ -169,12 +180,16 @@
     }
 
     async function generateAIImage() {
-      if (!originalImage) return;
+      if (canvas.classList.contains('hidden')) return;
+      const dataURL = canvas.toDataURL('image/png');
+      generateBtn.disabled = true;
+      const prevText = generateBtn.textContent;
+      generateBtn.textContent = '生成中...';
       try {
         const res = await fetch('/.netlify/functions/generateImage', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ imageData: originalImage })
+          body: JSON.stringify({ imageData: dataURL })
         });
         const data = await res.json();
         if (data.generatedImage) {
@@ -189,6 +204,9 @@
         }
       } catch (e) {
         console.error(e);
+      } finally {
+        generateBtn.disabled = false;
+        generateBtn.textContent = prevText;
       }
     }
 
@@ -201,12 +219,18 @@
       const container = document.createElement('div');
       container.className = 'player-container';
       const img = document.createElement('img');
-      img.src = currentImage;
+      img.src = players[playerIndex].generatedImg || players[playerIndex].img;
       img.alt = name;
+      if (players[playerIndex].generatedImg && players[playerIndex].generatedImg !== players[playerIndex].img) {
+        const badge = document.createElement('div');
+        badge.textContent = '生成済';
+        badge.className = 'badge';
+        container.appendChild(badge);
+      }
       const regen = document.createElement('button');
       regen.textContent = '画像を再生成';
       regen.className = 'btn mt-1';
-      regen.addEventListener('click', () => regenerateImage(playerIndex, img));
+      regen.addEventListener('click', () => regenerateImage(playerIndex, img, container));
       const input = document.createElement('input');
       input.type = 'text';
       input.value = name;
@@ -227,7 +251,7 @@
       originalImage = null;
     }
 
-    async function regenerateImage(index, imgEl) {
+    async function regenerateImage(index, imgEl, container) {
       try {
         const res = await fetch('/.netlify/functions/generateImage', {
           method: 'POST',
@@ -238,6 +262,12 @@
         if (data.generatedImage) {
           players[index].generatedImg = data.generatedImage;
           imgEl.src = data.generatedImage;
+          if (!container.querySelector('.badge')) {
+            const badge = document.createElement('div');
+            badge.textContent = '生成済';
+            badge.className = 'badge';
+            container.appendChild(badge);
+          }
         }
       } catch (e) {
         console.error(e);
