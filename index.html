@@ -38,6 +38,11 @@
       border: 3px solid #f87171;
       border-radius: 10px;
       box-shadow: 0 0 10px #f87171;
+      cursor: pointer;
+    }
+    .gallery img.selected {
+      border-color: #34d399;
+      box-shadow: 0 0 10px #34d399;
     }
   </style>
 </head>
@@ -50,14 +55,16 @@
   <audio id="bgm" loop>
     <source src="./Peritune_Swift_Strike_loop.mp3" type="audio/mpeg">
   </audio>
+
   <div class="my-4">
     <select id="nameCategory" class="text-black">
-      <option value="A">A</option>
-      <option value="B">B</option>
-      <option value="D">D</option>
+      <option value="A">爆走系</option>
+      <option value="B">闇系</option>
+      <option value="D">ランダム混合</option>
     </select>
     <button class="btn" onclick="generateName()">🎲 名前生成</button>
     <input id="playerName" class="text-black p-2" placeholder="生成された名前" />
+    <button class="btn" onclick="confirmName()">✅ 名前登録</button>
   </div>
 
   <div class="my-4">
@@ -85,7 +92,11 @@
   </div>
   <div id="log" class="log"></div>
 
+
 <script src="./name-data/setA.js"></script>
+<script src="./name-data/setB.js"></script>
+<script src="./name-data/setD.js"></script>
+
   <script>
     const bgm = document.getElementById('bgm');
     function startBGM() { bgm.currentTime = 0; bgm.play().catch(e => console.log(e)); }
@@ -101,23 +112,44 @@
 
     let players = [];
     let playerCount = 0;
+    let selectedIndex = null;
+    function selectCandidate(index) {
+      selectedIndex = Number(index);
+      const imgs = gallery.querySelectorAll('img');
+      imgs.forEach((el, i) => {
+        if (i === selectedIndex) el.classList.add('selected');
+        else el.classList.remove('selected');
+      });
+      document.getElementById('playerName').value = players[selectedIndex].name || '';
+    }
+
     function generateName() {
-      var category = document.getElementById("nameCategory").value;
+      if (selectedIndex === null) return;
+      var category = document.getElementById('nameCategory').value;
       var data;
-      if (category === "A") data = window.nameDataA;
-      else if (category === "B") data = window.nameDataB;
-      else if (category === "D") data = window.nameDataD;
+      if (category === 'A') data = window.nameDataA;
+      else if (category === 'B') data = window.nameDataB;
+      else if (category === 'D') data = window.nameDataD;
       if (!data || !data.adjectives || !data.nouns || !data.titles) {
-        console.warn("名前データが見つかりません", category);
-        document.getElementById("playerName").value = "";
-        return "";
+        console.warn('名前データが見つかりません', category);
+        document.getElementById('playerName').value = '';
+        return '';
       }
       function rand(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
       var name = rand(data.adjectives) + rand(data.nouns) + rand(data.titles);
-      document.getElementById("playerName").value = name;
+      document.getElementById('playerName').value = name;
       return name;
     }
 
+    function confirmName() {
+      if (selectedIndex === null) return;
+      const nameInput = document.getElementById('playerName');
+      const name = nameInput.value || generateName();
+      players[selectedIndex].name = name;
+      const imgEl = gallery.querySelectorAll('img')[selectedIndex];
+      imgEl.alt = name;
+      nameInput.value = '';
+    }
 
     async function startCamera() {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { exact: 'environment' } } });
@@ -171,18 +203,19 @@
 
     }
 
-    function getRandomPair() {
-      const shuffled = [...players].sort(() => 0.5 - Math.random());
+    function getRandomPair(list) {
+      const shuffled = [...list].sort(() => 0.5 - Math.random());
       return [shuffled[0], shuffled[1]];
     }
 
     async function startBattle() {
-      if (players.length < 2) {
-        log.innerHTML = "⚠️ 選手は最低2人登録してください！";
+      const readyPlayers = players.filter(p => p.name);
+      if (readyPlayers.length < 2) {
+        log.innerHTML = "⚠️ 名前登録済みの選手を最低2人用意してください！";
         return;
       }
 
-      const [a, b] = getRandomPair();
+      const [a, b] = getRandomPair(readyPlayers);
       log.innerHTML = `<strong>対戦カード:</strong> ${a.name} vs ${b.name}<br>📡 実況生成中...`;
 
       try {

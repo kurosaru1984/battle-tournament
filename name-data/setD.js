@@ -1,5 +1,6 @@
-window.nameDataD = {
-  adjectives: ['闇の', '光の', '烈火の', '疾走する', '不屈の'],
-  nouns: ['獅子', '影武者', '騎士団', 'ドラゴン', '戦士'],
-  titles: ['伝説', '王者', '守護神', '司令官', '主']
-};
+(function(){
+  var adjectives = ['ランダム','混沌','未知','奇跡','無敵'];
+  var nouns = ['ドラゴン','ニンジャ','サイボーグ','モンスター','ウォリアー'];
+  var titles = ['マスター','キング','ファイター','チャンピオン','バスター'];
+  window.nameDataD = { adjectives: adjectives, nouns: nouns, titles: titles };
+})();

@@ -1,5 +1,11 @@
-window.nameDataB = {
-  adjectives: ['氷の', '鋼鉄の', '天空の', '怒れる', '聖なる'],
-  nouns: ['魔人', 'フェニックス', '忍者', '狼', '戦鬼'],
-  titles: ['覇者', '勇士', '指導者', '皇帝', '英雄']
-};
+(function(){
+  var adjectives = [];
+  var nouns = [];
+  var titles = [];
+  for(var i=1;i<=1000;i++){
+    adjectives.push('闇'+i);
+    nouns.push('ゴースト'+i);
+    titles.push('ロード'+i);
+  }
+  window.nameDataB = { adjectives: adjectives, nouns: nouns, titles: titles };
+})();
