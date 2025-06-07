@@ -50,6 +50,15 @@
   <audio id="bgm" loop>
     <source src="./Peritune_Swift_Strike_loop.mp3" type="audio/mpeg">
   </audio>
+  <div class="my-4">
+    <select id="nameCategory" class="text-black">
+      <option value="A">A</option>
+      <option value="B">B</option>
+      <option value="D">D</option>
+    </select>
+    <button class="btn" onclick="generateName()">🎲 名前生成</button>
+    <input id="playerName" class="text-black p-2" placeholder="生成された名前" />
+  </div>
 
   <div class="my-4">
     <button class="btn" onclick="startCamera()">📸 カメラを起動</button>
@@ -76,6 +85,7 @@
   </div>
   <div id="log" class="log"></div>
 
+<script src="./name-data/setA.js"></script>
   <script>
     const bgm = document.getElementById('bgm');
     function startBGM() { bgm.currentTime = 0; bgm.play().catch(e => console.log(e)); }
@@ -91,6 +101,23 @@
 
     let players = [];
     let playerCount = 0;
+    function generateName() {
+      var category = document.getElementById("nameCategory").value;
+      var data;
+      if (category === "A") data = window.nameDataA;
+      else if (category === "B") data = window.nameDataB;
+      else if (category === "D") data = window.nameDataD;
+      if (!data || !data.adjectives || !data.nouns || !data.titles) {
+        console.warn("名前データが見つかりません", category);
+        document.getElementById("playerName").value = "";
+        return "";
+      }
+      function rand(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
+      var name = rand(data.adjectives) + rand(data.nouns) + rand(data.titles);
+      document.getElementById("playerName").value = name;
+      return name;
+    }
+
 
     async function startCamera() {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { exact: 'environment' } } });
@@ -98,6 +125,7 @@
       video.classList.remove('hidden');
       takeBtn.classList.remove('hidden');
     }
+
 
     function takePhoto() {
       canvas.width = video.videoWidth;
@@ -140,6 +168,7 @@
       players.push({ no: playerCount, img: dataUrl, name });
       canvas.classList.add('hidden');
       confirmBtn.classList.add('hidden');
+
     }
 
     function getRandomPair() {

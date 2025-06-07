@@ -1,5 +1,15 @@
-window.nameDataA = {
-  adjectives: ['紅蓮の', '疾風の', '蒼き', '闘志の', '雷鳴の'],
-  nouns: ['ドラゴン', '剣士', '影', '虎', '騎士'],
-  titles: ['王', '戦士', '使者', '勇者', '守護者']
-};
+(function(){
+  var adjectives = [];
+  var nouns = [];
+  var titles = [];
+  for(var i=1;i<=1000;i++){
+    adjectives.push('爆走'+i);
+    nouns.push('ワニ'+i);
+    titles.push('キング'+i);
+  }
+  window.nameDataA = {
+    adjectives: adjectives,
+    nouns: nouns,
+    titles: titles
+  };
+})();
