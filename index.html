@@ -89,6 +89,7 @@
 
   <div id="nameSection" class="my-4 hidden">
     <button id="generateImageBtn" class="btn mb-2" onclick="generateAIImage()">画像を生成</button>
+    <div id="statusLog" class="text-sm text-green-400"></div>
     <button class="btn" onclick="generateName()">🎲 名前を生成</button>
     <input id="playerName" class="text-black p-2" placeholder="生成された名前" />
     <button class="btn" onclick="registerPlayer()">✅ 確定して登録</button>
@@ -120,6 +121,11 @@
     const ctx = canvas.getContext('2d');
     const gallery = document.getElementById('gallery');
     const log = document.getElementById('log');
+
+    function logStatus(msg) {
+      const status = document.getElementById("statusLog");
+      if (status) status.innerText = msg;
+    }
 
     let players = [];
     let playerCount = 0;
@@ -181,16 +187,19 @@
 
     async function generateAIImage() {
       if (canvas.classList.contains('hidden')) return;
+      logStatus("");
       const dataURL = canvas.toDataURL('image/png');
       generateBtn.disabled = true;
       const prevText = generateBtn.textContent;
       generateBtn.textContent = '生成中...';
       try {
+        logStatus("🎯 画像生成リクエスト送信中...");
         const res = await fetch('/.netlify/functions/generateImage', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ imageData: dataURL })
         });
+        logStatus("📡 サーバーからレスポンス受信");
         const data = await res.json();
         if (data.generatedImage) {
           currentImage = data.generatedImage;
@@ -199,11 +208,14 @@
             canvas.width = img.width;
             canvas.height = img.height;
             ctx.drawImage(img, 0, 0);
+            logStatus("✅ 画像描画完了！");
           };
+          img.onerror = () => logStatus("❌ 画像読み込み失敗！");
           img.src = currentImage;
         }
       } catch (e) {
         console.error(e);
+        logStatus("❌ fetch失敗: " + e.message);
       } finally {
         generateBtn.disabled = false;
         generateBtn.textContent = prevText;
