@@ -212,12 +212,14 @@
 
 
     async function generateAIImage() {
+      const name = playerNameInput.value.trim();
+      const prompt = `A CG portrait of a warrior named ${name}. A fierce fighter with special abilities and powerful presence.`;
       const payload = {
-        prompt: 'A CG portrait of a warrior named 爆走ゴリラキング. A gorilla fighter with explosive speed and a king-like presence.',
+        prompt,
         n: 1,
         size: '512x512'
       };
-      currentPrompt = payload.prompt;
+      currentPrompt = prompt;
 
       generateBtn.disabled = true;
       const prevText = generateBtn.textContent;
