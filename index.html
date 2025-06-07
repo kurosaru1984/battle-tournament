@@ -79,11 +79,9 @@
   <div id="nameSection" class="my-4 hidden">
     <label for="nameCategory" class="mr-2">名前カテゴリ</label>
     <select id="nameCategory" class="text-black">
-      <option value="A">A = High-Speed Style（爆走系）</option>
-      <option value="B">B = Dark Style（闇系）</option>
-      <option value="D">D = Random Mixed（ランダム混合）</option>
+      <option value="A">爆走系</option>
     </select>
-    <button class="btn" onclick="handleGenerateName()">🎲 名前を生成</button>
+    <button class="btn" onclick="generateName()">🎲 名前を生成</button>
     <input id="playerName" class="text-black p-2" placeholder="生成された名前" />
     <button class="btn" onclick="registerPlayer()">✅ 確定して登録</button>
   </div>
@@ -140,25 +138,25 @@
       return arr[Math.floor(Math.random() * arr.length)];
     }
 
-    function handleGenerateName() {
-      const category = document.getElementById('nameCategory').value;
-      let data;
-      if (category === 'A') data = window.nameDataA;
-      else if (category === 'B') data = window.nameDataB;
-      else if (category === 'D') data = window.nameDataD;
-
-      if (!data) {
-        console.error('No name data for category:', category);
-        return '';
-      }
-
-      const adjective = getRandom(data.adjectives);
-      const noun = getRandom(data.nouns);
-      const title = getRandom(data.titles);
+    let prevAdj="", prevNoun="", prevTitle="";
+    function getRandomDifferent(arr, prev){
+      let v;
+      do { v = arr[Math.floor(Math.random()*arr.length)]; } while(arr.length>1 && v===prev);
+      return v;
+    }
+    function generateName() {
+      const data = window.nameDataA;
+      const adjective = getRandomDifferent(data.adjectives, prevAdj);
+      const noun = getRandomDifferent(data.nouns, prevNoun);
+      const title = getRandomDifferent(data.titles, prevTitle);
+      prevAdj = adjective;
+      prevNoun = noun;
+      prevTitle = title;
       const name = adjective + noun + title;
       playerNameInput.value = name;
       return name;
     }
+
 
     function confirmPhoto() {
       currentImage = canvas.toDataURL('image/png');
@@ -172,7 +170,7 @@
     }
 
     function registerPlayer() {
-      const name = playerNameInput.value || handleGenerateName();
+      const name = playerNameInput.value || generateName();
       if (!currentImage) return;
       playerCount++;
       players.push({ no: playerCount, name, img: currentImage });
