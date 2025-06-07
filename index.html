@@ -93,6 +93,7 @@
     <button class="btn" onclick="generateName()">🎲 名前を生成</button>
     <input id="playerName" class="text-black p-2" placeholder="生成された名前" />
     <button class="btn" onclick="registerPlayer()">✅ 確定して登録</button>
+    <pre id="charInfo" class="bg-gray-800 text-green-200 p-2 mt-2 rounded text-left text-sm hidden"></pre>
   </div>
 
   <h2 class="text-xl mt-8 text-blue-300">登録選手ギャラリー</h2>
@@ -118,6 +119,12 @@
     const nameSection = document.getElementById('nameSection');
     const generateBtn = document.getElementById('generateImageBtn');
     const playerNameInput = document.getElementById('playerName');
+    const charInfoEl = document.getElementById('charInfo');
+    playerNameInput.addEventListener('input', () => {
+      const parts = parseNameParts(playerNameInput.value);
+      const profile = buildCharacterProfile(playerNameInput.value, parts);
+      showCharacterProfile(profile);
+    });
     const ctx = canvas.getContext('2d');
     const gallery = document.getElementById('gallery');
     const log = document.getElementById('log');
@@ -158,6 +165,49 @@
       do { v = arr[Math.floor(Math.random()*arr.length)]; } while(arr.length>1 && v===prev);
       return v;
     }
+
+    function parseNameParts(name){
+      const {adjectives, nouns, titles} = window.nameDataA;
+      let adjective="", noun="", title="";
+      for(const adj of adjectives){
+        if(name.startsWith(adj)){
+          adjective = adj;
+          name = name.slice(adj.length);
+          break;
+        }
+      }
+      for(const t of titles){
+        if(name.endsWith(t)){
+          title = t;
+          name = name.slice(0, name.length - t.length);
+          break;
+        }
+      }
+      for(const n of nouns){
+        if(name.includes(n)){
+          noun = n;
+          break;
+        }
+      }
+      return { adjective, noun, title };
+    }
+
+    function buildCharacterProfile(name, parts){
+      const { adjective, noun, title } = parts;
+      const weapons = ['ハンマー','ブレード','ランス','アックス','ナックル'];
+      const weapon = adjective ? `${adjective}エンジン${weapons[Math.floor(Math.random()*weapons.length)]}` : `${weapons[Math.floor(Math.random()*weapons.length)]}`;
+      const featureAdj = adjective || '未知の力';
+      const featureNoun = noun || '存在';
+      const featureTitle = title ? `${title}のように` : '';
+      const feature = `${featureAdj}の力を持つ${featureNoun}で、${featureTitle}戦場を駆ける`;
+      return { 名前: name, 属性: adjective, 種族: noun, 称号: title, 武器: weapon, 特徴: feature };
+    }
+
+    function showCharacterProfile(profile){
+      if(!charInfoEl) return;
+      charInfoEl.textContent = JSON.stringify(profile, null, 2);
+      charInfoEl.classList.remove('hidden');
+    }
     function generateName() {
       const data = window.nameDataA;
       const adjective = getRandomDifferent(data.adjectives, prevAdj);
@@ -168,6 +218,9 @@
       prevTitle = title;
       const name = adjective + noun + title;
       playerNameInput.value = name;
+      const parts = parseNameParts(name);
+      const profile = buildCharacterProfile(name, parts);
+      showCharacterProfile(profile);
       return name;
     }
 
@@ -256,6 +309,10 @@
       container.appendChild(input);
       gallery.appendChild(container);
       playerNameInput.value = '';
+      if(charInfoEl) {
+        charInfoEl.classList.add('hidden');
+        charInfoEl.textContent = '';
+      }
       nameSection.classList.add('hidden');
       canvas.classList.add('hidden');
       generateBtn.classList.add('hidden');
