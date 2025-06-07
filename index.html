@@ -202,6 +202,7 @@
         logStatus("📡 サーバーからレスポンス受信");
         const data = await res.json();
         if (data.generatedImage) {
+          console.log("generatedImage:", data.generatedImage);
           currentImage = data.generatedImage;
           const img = new Image();
           img.onload = () => {
@@ -210,8 +211,8 @@
             ctx.drawImage(img, 0, 0);
             logStatus("✅ 画像描画完了！");
           };
-          img.onerror = () => logStatus("❌ 画像読み込み失敗！");
-          img.src = currentImage;
+          img.onerror = () => logStatus("❌ Image failed to load: " + data.generatedImage);
+          img.src = data.generatedImage;
         }
       } catch (e) {
         console.error(e);
