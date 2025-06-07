@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>最強バトルトーナメント2025 - ver 2.0</title>
+  <title>最強バトルトーナメント2025 - ver 3.0</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <style>
     body {
@@ -69,7 +69,7 @@
 </head>
 <body>
   <h1 class="text-2xl font-bold text-yellow-400">🎮 最強バトルトーナメント2025</h1>
-  <p class="text-gray-400 mb-4">ver 2.0</p>
+  <p class="text-gray-400 mb-4">ver 3.0</p>
 
   <button class="btn" onclick="startBGM()">🎵 BGM再生</button>
   <button class="btn" onclick="stopBGM()">🔇 BGM停止</button>
@@ -78,21 +78,14 @@
   </audio>
 
 
-  <div class="my-4">
-    <button class="btn" onclick="startCamera()">📸 カメラを起動</button>
-    <video id="video" autoplay playsinline class="hidden border-4 border-yellow-500 mt-4"></video>
-    <button id="takePhoto" class="btn hidden mt-2" onclick="takePhoto()">🖼️ 写真を撮る</button>
-  </div>
 
-  <canvas id="canvas" class="hidden"></canvas>
-  <button id="confirmBtn" class="btn hidden" onclick="confirmPhoto()">✅ この画像を使う</button>
-
-  <div id="nameSection" class="my-4 hidden">
-    <button id="generateImageBtn" class="btn mb-2" onclick="generateAIImage()">画像を生成</button>
-    <div id="statusLog" class="text-sm text-green-400"></div>
+  <div id="nameSection" class="my-4">
     <button class="btn" onclick="generateName()">🎲 名前を生成</button>
     <input id="playerName" class="text-black p-2" placeholder="生成された名前" />
-    <button class="btn" onclick="registerPlayer()">✅ 確定して登録</button>
+    <button id="generateImageBtn" class="btn mb-2" onclick="generateAIImage()">画像を生成</button>
+    <div id="statusLog" class="text-sm text-green-400"></div>
+    <img id="previewImage" class="mx-auto my-2 hidden border-4 border-yellow-500 rounded" />
+    <button id="confirmBtn" class="btn hidden" onclick="registerPlayer()">✅ この画像を使う</button>
     <pre id="charInfo" class="bg-gray-800 text-green-200 p-2 mt-2 rounded text-left text-sm hidden"></pre>
   </div>
 
@@ -112,22 +105,19 @@
     function startBGM() { bgm.currentTime = 0; bgm.play().catch(e => console.log(e)); }
     function stopBGM() { bgm.pause(); }
 
-    const video = document.getElementById('video');
-    const canvas = document.getElementById('canvas');
-    const takeBtn = document.getElementById('takePhoto');
-    const confirmBtn = document.getElementById('confirmBtn');
-    const nameSection = document.getElementById('nameSection');
     const generateBtn = document.getElementById('generateImageBtn');
+    const confirmBtn = document.getElementById('confirmBtn');
     const playerNameInput = document.getElementById('playerName');
     const charInfoEl = document.getElementById('charInfo');
+    const previewImage = document.getElementById('previewImage');
+    const gallery = document.getElementById('gallery');
+    const log = document.getElementById('log');
+
     playerNameInput.addEventListener('input', () => {
       const parts = parseNameParts(playerNameInput.value);
       const profile = buildCharacterProfile(playerNameInput.value, parts);
       showCharacterProfile(profile);
     });
-    const ctx = canvas.getContext('2d');
-    const gallery = document.getElementById('gallery');
-    const log = document.getElementById('log');
 
     function logStatus(msg) {
       const status = document.getElementById("statusLog");
@@ -136,24 +126,8 @@
 
     let players = [];
     let playerCount = 0;
-    let originalImage = null;
     let currentImage = null;
-
-    async function startCamera() {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { exact: 'environment' } } });
-      video.srcObject = stream;
-      video.classList.remove('hidden');
-      takeBtn.classList.remove('hidden');
-    }
-
-
-    function takePhoto() {
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      ctx.drawImage(video, 0, 0);
-      canvas.classList.remove('hidden');
-      confirmBtn.classList.remove('hidden');
-    }
+    let currentPrompt = '';
 
     function getRandom(arr) {
       return arr[Math.floor(Math.random() * arr.length)];
@@ -225,51 +199,38 @@
     }
 
 
-    function confirmPhoto() {
-      originalImage = canvas.toDataURL('image/png');
-      currentImage = originalImage;
-      confirmBtn.classList.add('hidden');
-      takeBtn.classList.add('hidden');
-      if (video.srcObject) {
-        video.srcObject.getTracks().forEach(t => t.stop());
-      }
-      video.classList.add('hidden');
-      nameSection.classList.remove('hidden');
-      generateBtn.classList.remove('hidden');
-    }
-
     async function generateAIImage() {
-      if (canvas.classList.contains('hidden')) return;
-      logStatus("");
-      const dataURL = canvas.toDataURL('image/png');
+      const name = playerNameInput.value.trim();
+      if (!name) {
+        logStatus('⚠️ 先に名前を生成してください');
+        return;
+      }
+      const parts = parseNameParts(name);
+      currentPrompt = `A CG portrait of a warrior named ${name}. A ${parts.noun || ''} fighter with ${parts.adjective ? 'explosive speed ' : ''}${parts.title ? 'and a ' + parts.title + '-like presence.' : ''}`;
+
       generateBtn.disabled = true;
       const prevText = generateBtn.textContent;
       generateBtn.textContent = '生成中...';
+      logStatus('🎯 画像生成リクエスト送信中...');
+
       try {
-        logStatus("🎯 画像生成リクエスト送信中...");
         const res = await fetch('/.netlify/functions/generateImage', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ imageData: dataURL })
+          body: JSON.stringify({ prompt: currentPrompt })
         });
-        logStatus("📡 サーバーからレスポンス受信");
         const data = await res.json();
-        if (data.generatedImage) {
-          console.log("generatedImage:", data.generatedImage);
-          currentImage = data.generatedImage;
-          const img = new Image();
-          img.onload = () => {
-            canvas.width = img.width;
-            canvas.height = img.height;
-            ctx.drawImage(img, 0, 0);
-            logStatus("✅ 画像描画完了！");
-          };
-          img.onerror = () => logStatus("❌ Image failed to load: " + data.generatedImage);
-          img.src = data.generatedImage;
+        if (data.imageUrl) {
+          currentImage = data.imageUrl;
+          previewImage.src = data.imageUrl;
+          previewImage.classList.remove('hidden');
+          confirmBtn.classList.remove('hidden');
+          logStatus('✅ 画像生成完了');
+        } else if (data.error) {
+          logStatus('❌ ' + data.error);
         }
       } catch (e) {
-        console.error(e);
-        logStatus("❌ fetch失敗: " + e.message);
+        logStatus('❌ fetch失敗: ' + e.message);
       } finally {
         generateBtn.disabled = false;
         generateBtn.textContent = prevText;
@@ -278,21 +239,19 @@
 
     function registerPlayer() {
       const name = playerNameInput.value || generateName();
-      if (!originalImage || !currentImage) return;
+      if (!currentImage) return;
       playerCount++;
-      players.push({ no: playerCount, name, img: originalImage, generatedImg: currentImage });
+      players.push({ no: playerCount, name, img: currentImage, prompt: currentPrompt });
       const playerIndex = players.length - 1;
       const container = document.createElement('div');
       container.className = 'player-container';
       const img = document.createElement('img');
-      img.src = players[playerIndex].generatedImg || players[playerIndex].img;
+      img.src = players[playerIndex].img;
       img.alt = name;
-      if (players[playerIndex].generatedImg && players[playerIndex].generatedImg !== players[playerIndex].img) {
-        const badge = document.createElement('div');
-        badge.textContent = '生成済';
-        badge.className = 'badge';
-        container.appendChild(badge);
-      }
+      const badge = document.createElement('div');
+      badge.textContent = '生成済';
+      badge.className = 'badge';
+      container.appendChild(badge);
       const regen = document.createElement('button');
       regen.textContent = '画像を再生成';
       regen.className = 'btn mt-1';
@@ -313,36 +272,28 @@
         charInfoEl.classList.add('hidden');
         charInfoEl.textContent = '';
       }
-      nameSection.classList.add('hidden');
-      canvas.classList.add('hidden');
-      generateBtn.classList.add('hidden');
+      confirmBtn.classList.add('hidden');
+      previewImage.classList.add('hidden');
       log.innerHTML = `✅ ${name} を登録しました！`;
       currentImage = null;
-      originalImage = null;
     }
 
-    async function regenerateImage(index, imgEl, container) {
-      try {
-        const res = await fetch('/.netlify/functions/generateImage', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ imageData: players[index].img })
-        });
-        const data = await res.json();
-        if (data.generatedImage) {
-          players[index].generatedImg = data.generatedImage;
-          imgEl.src = data.generatedImage;
-          if (!container.querySelector('.badge')) {
-            const badge = document.createElement('div');
-            badge.textContent = '生成済';
-            badge.className = 'badge';
-            container.appendChild(badge);
+      async function regenerateImage(index, imgEl, container) {
+        try {
+          const res = await fetch('/.netlify/functions/generateImage', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prompt: players[index].prompt })
+          });
+          const data = await res.json();
+          if (data.imageUrl) {
+            players[index].img = data.imageUrl;
+            imgEl.src = data.imageUrl;
           }
+        } catch (e) {
+          console.error(e);
         }
-      } catch (e) {
-        console.error(e);
       }
-    }
 
     function getRandomPair(list) {
       const shuffled = [...list].sort(() => 0.5 - Math.random());
