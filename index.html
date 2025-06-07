@@ -212,13 +212,12 @@
 
 
     async function generateAIImage() {
-      const name = playerNameInput.value.trim();
-      if (!name) {
-        logStatus('⚠️ 先に名前を生成してください');
-        return;
-      }
-      const parts = parseNameParts(name);
-      currentPrompt = `A CG portrait of a warrior named ${name}. A ${parts.noun || ''} fighter with ${parts.adjective ? 'explosive speed ' : ''}${parts.title ? 'and a ' + parts.title + '-like presence.' : ''}`;
+      const payload = {
+        prompt: 'A CG portrait of a warrior named 爆走ゴリラキング. A gorilla fighter with explosive speed and a king-like presence.',
+        n: 1,
+        size: '512x512'
+      };
+      currentPrompt = payload.prompt;
 
       generateBtn.disabled = true;
       const prevText = generateBtn.textContent;
@@ -226,31 +225,34 @@
       logStatus('🎯 画像生成リクエスト送信中...');
 
       try {
-        console.log('🔍 Sending fetch to /.netlify/functions/generateImage');
-        console.log('Client: sending image generation request', currentPrompt);
-        const res = await fetch('/.netlify/functions/generateImage', {
+        console.log('🔍 Sending fetch to OpenAI');
+        const res = await fetch('https://api.openai.com/v1/images/generations', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ prompt: currentPrompt })
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer sk-XXXXXXXXXXXXXXXXXXXXXXXX'
+          },
+          body: JSON.stringify(payload)
         });
         console.log('📡 Fetch returned, status:', res.status);
         logStatus('📡 サーバー応答 status: ' + res.status);
         const data = await res.json();
         console.log('📦 Response JSON:', data);
-        console.log('Client: response data', data);
 
-        if (res.status !== 200 || !data.generatedImage) {
-          const errorMessage = data.error || res.statusText;
+        const imageUrl = data?.data?.[0]?.url;
+        if (!res.ok || !imageUrl) {
+          const errorMessage = data?.error?.message || res.statusText;
           logError('❌ サーバーエラー: ' + errorMessage);
           return;
         }
 
-        currentImage = data.generatedImage;
-        previewImage.src = data.generatedImage;
+        currentImage = imageUrl;
+        previewImage.src = imageUrl;
         previewImage.classList.remove('hidden');
         confirmBtn.classList.remove('hidden');
         logStatus('✅ 画像生成完了');
       } catch (e) {
+        console.error(e);
         logError('❌ 通信失敗: ' + e.message);
       } finally {
         generateBtn.disabled = false;
