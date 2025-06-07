@@ -1,5 +1,8 @@
 
 exports.handler = async function (event) {
+  console.log("\uD83D\uDFE2 generateImage function TRIGGERED");
+  console.log("\uD83D\uDCE6 Received body:", event.body);
+
   if (event.httpMethod && event.httpMethod !== 'POST') {
     return { statusCode: 405, body: 'Method Not Allowed' };
   }

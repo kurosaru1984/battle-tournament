@@ -226,16 +226,17 @@
       logStatus('🎯 画像生成リクエスト送信中...');
 
       try {
+        console.log('🔍 Sending fetch to /.netlify/functions/generateImage');
         console.log('Client: sending image generation request', currentPrompt);
         const res = await fetch('/.netlify/functions/generateImage', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ prompt: currentPrompt })
         });
-        console.log('Client: response status', res.status);
+        console.log('📡 Fetch returned, status:', res.status);
         logStatus('📡 サーバー応答 status: ' + res.status);
         const data = await res.json();
-        console.log(data);
+        console.log('📦 Response JSON:', data);
         console.log('Client: response data', data);
 
         if (res.status !== 200 || !data.generatedImage) {
@@ -300,14 +301,16 @@
 
       async function regenerateImage(index, imgEl, container) {
         try {
+          console.log('🔍 Sending fetch to /.netlify/functions/generateImage');
           console.log('Client: regenerating image for player', index);
           const res = await fetch('/.netlify/functions/generateImage', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ prompt: players[index].prompt })
           });
-          console.log('Client: regen response status', res.status);
+          console.log('📡 Fetch returned, status:', res.status);
           const data = await res.json();
+          console.log('📦 Response JSON:', data);
           console.log('Client: regen response data', data);
           if (data.generatedImage) {
             players[index].img = data.generatedImage;
