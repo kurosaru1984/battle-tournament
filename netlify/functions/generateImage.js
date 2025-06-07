@@ -11,6 +11,8 @@ exports.handler = async function (event) {
   return {
     statusCode: 200,
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ generatedImage: 'https://placekitten.com/400/400' })
+    body: JSON.stringify({
+      generatedImage: 'https://dummyimage.com/400x400/000/fff.png&text=TEST'
+    })
   };
 };
