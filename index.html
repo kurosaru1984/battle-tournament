@@ -101,6 +101,9 @@
 <script src="./name-data/setA.js"></script>
 
   <script>
+    const OPENAI_API_KEY = ""; // <- Fill this to enable real OpenAI usage
+    const PLACEHOLDER_IMAGE =
+      "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVQYV2NgYAAAAAMAAWgmWQ0AAAAASUVORK5CYII=";
     const bgm = document.getElementById('bgm');
     function startBGM() { bgm.currentTime = 0; bgm.play().catch(e => console.log(e)); }
     function stopBGM() { bgm.pause(); }
@@ -150,6 +153,33 @@
       let v;
       do { v = arr[Math.floor(Math.random()*arr.length)]; } while(arr.length>1 && v===prev);
       return v;
+    }
+
+    async function fetchAIImage(prompt) {
+      if (!OPENAI_API_KEY) {
+        console.warn('OPENAI_API_KEY not set, using placeholder image');
+        return PLACEHOLDER_IMAGE;
+      }
+      try {
+        const res = await fetch('https://api.openai.com/v1/images/generations', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + OPENAI_API_KEY
+          },
+          body: JSON.stringify({ prompt, n: 1, size: '512x512' })
+        });
+        const data = await res.json();
+        const url = data?.data?.[0]?.url;
+        if (!res.ok || !url) {
+          console.warn('Image generation failed, using placeholder', data);
+          return PLACEHOLDER_IMAGE;
+        }
+        return url;
+      } catch (e) {
+        console.warn('Image fetch error, using placeholder', e);
+        return PLACEHOLDER_IMAGE;
+      }
     }
 
     function parseNameParts(name){
@@ -218,11 +248,6 @@
       const noun = parts.noun || 'hero';
       const title = parts.title || 'champion';
       const prompt = `A hyper-realistic CG portrait of a ${noun} warrior named ${name}, with ${adjective} energy and the presence of a ${title}.`;
-      const payload = {
-        prompt,
-        n: 1,
-        size: '512x512'
-      };
       currentPrompt = prompt;
 
       generateBtn.disabled = true;
@@ -230,40 +255,22 @@
       generateBtn.textContent = '生成中...';
       logStatus('🎯 画像生成リクエスト送信中...');
 
-      try {
-        console.log('🔍 Sending fetch to OpenAI');
-        const res = await fetch('https://api.openai.com/v1/images/generations', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer sk-XXXXXXXXXXXXXXXXXXXXXXXX'
-          },
-          body: JSON.stringify(payload)
-        });
-        console.log('📡 Fetch returned, status:', res.status);
-        logStatus('📡 サーバー応答 status: ' + res.status);
-        const data = await res.json();
-        console.log('📦 Response JSON:', data);
+      const imageUrl = await fetchAIImage(prompt);
 
-        const imageUrl = data?.data?.[0]?.url;
-        if (!res.ok || !imageUrl) {
-          const errorMessage = data?.error?.message || res.statusText;
-          logError('❌ サーバーエラー: ' + errorMessage);
-          return;
-        }
-
-        currentImage = imageUrl;
-        previewImage.src = imageUrl;
-        previewImage.classList.remove('hidden');
-        confirmBtn.classList.remove('hidden');
+      currentImage = imageUrl;
+      previewImage.src = imageUrl;
+      previewImage.width = 512;
+      previewImage.height = 512;
+      previewImage.classList.remove('hidden');
+      confirmBtn.classList.remove('hidden');
+      if (imageUrl === PLACEHOLDER_IMAGE) {
+        logStatus('⚠️ ダミー画像を表示しています');
+      } else {
         logStatus('✅ 画像生成完了');
-      } catch (e) {
-        console.error(e);
-        logError('❌ 通信失敗: ' + e.message);
-      } finally {
-        generateBtn.disabled = false;
-        generateBtn.textContent = prevText;
       }
+
+      generateBtn.disabled = false;
+      generateBtn.textContent = prevText;
     }
 
     function registerPlayer() {
@@ -284,7 +291,7 @@
       const regen = document.createElement('button');
       regen.textContent = '画像を再生成';
       regen.className = 'btn mt-1';
-      regen.addEventListener('click', () => regenerateImage(playerIndex, img, container));
+      regen.addEventListener('click', () => regenerateImage(playerIndex, img));
       const input = document.createElement('input');
       input.type = 'text';
       input.value = name;
@@ -307,31 +314,56 @@
       currentImage = null;
     }
 
-      async function regenerateImage(index, imgEl, container) {
-        try {
-          console.log('🔍 Sending fetch to /.netlify/functions/generateImage');
-          console.log('Client: regenerating image for player', index);
-          const res = await fetch('/.netlify/functions/generateImage', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ prompt: players[index].prompt })
-          });
-          console.log('📡 Fetch returned, status:', res.status);
-          const data = await res.json();
-          console.log('📦 Response JSON:', data);
-          console.log('Client: regen response data', data);
-          if (data.generatedImage) {
-            players[index].img = data.generatedImage;
-            imgEl.src = data.generatedImage;
-          }
-        } catch (e) {
-          console.error(e);
-        }
+      async function regenerateImage(index, imgEl) {
+        const url = await fetchAIImage(players[index].prompt);
+        players[index].img = url;
+        imgEl.src = url;
       }
 
     function getRandomPair(list) {
       const shuffled = [...list].sort(() => 0.5 - Math.random());
       return [shuffled[0], shuffled[1]];
+    }
+
+    async function generateBattleText(nameA, nameB) {
+      const dummy = [
+        `${nameA}の強烈な一撃が決まった！`,
+        `${nameB}が華麗にかわした！`,
+        `両者一歩も譲らない激しい戦いだ！`,
+        `${nameA}が究極奥義を放つ！`,
+        `${nameB}が逆転のチャンスをつかんだ！`
+      ];
+      if (!OPENAI_API_KEY) {
+        console.warn('OPENAI_API_KEY not set, using dummy battle text');
+        return getRandom(dummy);
+      }
+      try {
+        const res = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + OPENAI_API_KEY
+          },
+          body: JSON.stringify({
+            model: 'gpt-3.5-turbo',
+            messages: [
+              { role: 'system', content: 'あなたは熱狂的な日本語の実況アナウンサーです。短い1文でバトル実況してください。' },
+              { role: 'user', content: `${nameA}と${nameB}が激突しています。実況してください。` }
+            ],
+            max_tokens: 60
+          })
+        });
+        const data = await res.json();
+        const text = data?.choices?.[0]?.message?.content?.trim();
+        if (!res.ok || !text) {
+          console.warn('Battle text generation failed, using dummy text', data);
+          return getRandom(dummy);
+        }
+        return text;
+      } catch (e) {
+        console.warn('Battle text fetch error, using dummy text', e);
+        return getRandom(dummy);
+      }
     }
 
     async function startBattle() {
@@ -344,23 +376,8 @@
       const [a, b] = getRandomPair(readyPlayers);
       log.innerHTML = `<strong>対戦カード:</strong> ${a.name} vs ${b.name}<br>📡 実況生成中...`;
 
-      try {
-        const res = await fetch("/.netlify/functions/generateBattle", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ charA: a.name, charB: b.name })
-        });
-
-        const data = await res.json();
-
-        if (data.result && typeof data.result === "string") {
-          log.innerHTML += `\n\n<strong>🧠 実況結果:</strong><br>${data.result}`;
-        } else {
-          log.innerHTML += `\n⚠️ 返ってきたレスポンスに実況が含まれていません<br><code>${JSON.stringify(data)}</code>`;
-        }
-      } catch (err) {
-        log.innerHTML += `\n❌ fetch自体に失敗しました：${err.message}<br><code>${JSON.stringify(err)}</code>`;
-      }
+      const text = await generateBattleText(a.name, b.name);
+      log.innerHTML += `<br><strong>🧠 実況結果:</strong><br>${text}`;
     }
   </script>
 </body>
