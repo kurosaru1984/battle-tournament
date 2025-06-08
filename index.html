@@ -65,6 +65,29 @@
       border-radius: 10px;
       box-shadow: 0 0 15px #facc15;
     }
+    .champion-container {
+      background: linear-gradient(45deg, rgba(255,215,0,0.2), rgba(255,215,0,0.1));
+      padding: 1rem;
+      border-radius: 12px;
+      display: inline-block;
+    }
+    .champion-img {
+      animation: champion-glow 2s infinite alternate;
+    }
+    .champion-name {
+      animation: champion-pop 1s infinite alternate;
+      font-weight: bold;
+      color: #facc15;
+      display: block;
+    }
+    @keyframes champion-glow {
+      from { transform: scale(1) rotate(0deg); box-shadow: 0 0 15px #facc15; }
+      to { transform: scale(1.1) rotate(10deg); box-shadow: 0 0 30px #fff; }
+    }
+    @keyframes champion-pop {
+      from { transform: scale(1); }
+      to { transform: scale(1.1); }
+    }
     .badge {
       position: absolute;
       top: 2px;
@@ -84,6 +107,9 @@
   <button class="btn" onclick="startBGM()">🎵 BGM再生</button>
   <button class="btn" onclick="stopBGM()">🔇 BGM停止</button>
   <audio id="bgm" loop>
+    <source src="./Peritune_Swift_Strike_loop.mp3" type="audio/mpeg">
+  </audio>
+  <audio id="fanfare">
     <source src="./Peritune_Swift_Strike_loop.mp3" type="audio/mpeg">
   </audio>
 
@@ -399,8 +425,16 @@
 
     function showChampion(p) {
       const champ = document.getElementById('champion');
-      champ.innerHTML = `<h2 class="text-2xl text-yellow-300">🏆 優勝: ${p.name}！</h2>` +
-        `<img src="${p.img}" alt="${p.name}" class="mx-auto my-2" />`;
+      const fanfare = document.getElementById('fanfare');
+      champ.innerHTML =
+        `<div class="champion-container">
+          <span class="champion-name text-2xl">🏆 優勝: ${p.name}！</span>
+          <img src="${p.img}" alt="${p.name}" class="champion-img mx-auto my-2" />
+        </div>`;
+      if (fanfare) {
+        fanfare.currentTime = 0;
+        fanfare.play().catch(e => console.log(e));
+      }
     }
 
     async function runTournament(list) {
