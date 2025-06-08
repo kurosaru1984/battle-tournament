@@ -213,7 +213,11 @@
 
     async function generateAIImage() {
       const name = playerNameInput.value.trim();
-      const prompt = `A CG portrait of a warrior named ${name}. A fierce fighter with special abilities and powerful presence.`;
+      const parts = parseNameParts(name);
+      const adjective = parts.adjective || 'mysterious';
+      const noun = parts.noun || 'hero';
+      const title = parts.title || 'champion';
+      const prompt = `A hyper-realistic CG portrait of a ${noun} warrior named ${name}, with ${adjective} energy and the presence of a ${title}.`;
       const payload = {
         prompt,
         n: 1,
