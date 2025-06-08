@@ -141,17 +141,28 @@
     const OPENAI_API_KEY = ""; // <- Fill this to enable real OpenAI usage
     const PLACEHOLDER_IMAGE =
       "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVQYV2NgYAAAAAMAAWgmWQ0AAAAASUVORK5CYII=";
-    const bgm = document.getElementById('bgm');
     function startBGM() {
-      if (bgm.paused) {
-        bgm.muted = false;
-        bgm.currentTime = 0;
-        bgm.play().catch(e => console.warn("BGM play failed, possibly due to browser restrictions:", e));
-      } else {
-        console.log("BGM is already playing.");
+      const bgm = document.getElementById('bgm');
+      if (!bgm) return;
+      try {
+        if (bgm.paused) {
+          bgm.muted = false;
+          bgm.currentTime = 0;
+          bgm
+            .play()
+            .then(() => console.log('✅ BGM is playing'))
+            .catch(e => console.warn('⚠️ BGM play failed:', e));
+        } else {
+          console.log('BGM is already playing.');
+        }
+      } catch (e) {
+        console.warn('⚠️ BGM exception:', e);
       }
     }
-    function stopBGM() { bgm.pause(); }
+    function stopBGM() {
+      const bgm = document.getElementById('bgm');
+      if (bgm) bgm.pause();
+    }
 
     const generateBtn = document.getElementById('generateImageBtn');
     const confirmBtn = document.getElementById('confirmBtn');
