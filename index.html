@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>最強バトルトーナメント2025 - ver 3.0</title>
+  <title>最強バトルトーナメント2025 - ver 3.1</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <style>
     body {
@@ -102,7 +102,7 @@
 </head>
 <body>
   <h1 class="text-2xl font-bold text-yellow-400">🎮 最強バトルトーナメント2025</h1>
-  <p class="text-gray-400 mb-4">ver 3.0</p>
+  <p class="text-gray-400 mb-4">ver 3.1</p>
 
   <button class="btn" onclick="startBGM()">🎵 BGM再生</button>
   <button class="btn" onclick="stopBGM()">🔇 BGM停止</button>
@@ -473,8 +473,8 @@
 
     async function startBattle() {
       const readyPlayers = players.filter(p => p.name);
-      if (readyPlayers.length < 2) {
-        log.innerHTML = "⚠️ 名前登録済みの選手を最低2人用意してください！";
+      if (readyPlayers.length < 2 || readyPlayers.length > 6) {
+        log.innerHTML = "⚠️ 選手数は2人以上6人以下である必要があります！";
         return;
       }
       document.getElementById('champion').innerHTML = '';
