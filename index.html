@@ -106,7 +106,7 @@
 
   <button class="btn" onclick="startBGM()">🎵 BGM再生</button>
   <button class="btn" onclick="stopBGM()">🔇 BGM停止</button>
-  <audio id="bgm" loop>
+  <audio id="bgm" muted autoplay loop>
     <source src="./Peritune_Swift_Strike_loop.mp3" type="audio/mpeg">
   </audio>
   <audio id="fanfare">
@@ -142,7 +142,15 @@
     const PLACEHOLDER_IMAGE =
       "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVQYV2NgYAAAAAMAAWgmWQ0AAAAASUVORK5CYII=";
     const bgm = document.getElementById('bgm');
-    function startBGM() { bgm.currentTime = 0; bgm.play().catch(e => console.log(e)); }
+    function startBGM() {
+      bgm.muted = false;
+      bgm.currentTime = 0;
+      if (bgm.load) bgm.load();
+      bgm.play().catch(e => {
+        console.log('Playback error:', e);
+        console.warn('BGM playback requires a user gesture.');
+      });
+    }
     function stopBGM() { bgm.pause(); }
 
     const generateBtn = document.getElementById('generateImageBtn');
